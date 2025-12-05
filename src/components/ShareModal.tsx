@@ -8,21 +8,29 @@ interface ShareModalProps {
 }
 
 export default function ShareModal({ patientId, onClose }: ShareModalProps) {
-  const [doctorId, setDoctorId] = useState('')
   const [consentSigned, setConsentSigned] = useState(false)
   const [showShareInfo, setShowShareInfo] = useState(false)
+  const [showDoctorIdInput, setShowDoctorIdInput] = useState(false)
+  const [doctorMedKeyId, setDoctorMedKeyId] = useState('')
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleConsentSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!doctorId.trim()) {
-      alert('Please enter a Doctor ID')
-      return
-    }
     if (!consentSigned) {
       alert('Please sign the consent form')
       return
     }
     setShowShareInfo(true)
+  }
+
+  const handleDoctorIdSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!doctorMedKeyId.trim()) {
+      alert('Please enter doctor\'s MedKey ID')
+      return
+    }
+    // Here you would typically send the doctor ID to the backend
+    alert(`Medical records shared with doctor MedKey ID: ${doctorMedKeyId}`)
+    onClose()
   }
 
   return (
@@ -54,7 +62,7 @@ export default function ShareModal({ patientId, onClose }: ShareModalProps) {
                   className="w-16 h-16 bg-apple-blue rounded-full flex items-center justify-center mx-auto mb-6"
                 >
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
                 </motion.div>
 
@@ -62,25 +70,10 @@ export default function ShareModal({ patientId, onClose }: ShareModalProps) {
                   Share Your Medical Records
                 </h2>
                 <p className="text-gray-600 mb-8">
-                  Enter doctor information and sign consent to share your records
+                  Please review and sign the consent form to share your records
                 </p>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Doctor ID Input */}
-                  <div className="text-left">
-                    <label className="block text-sm font-semibold text-gray-700 mb-3">
-                      Doctor ID <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={doctorId}
-                      onChange={(e) => setDoctorId(e.target.value)}
-                      className="apple-input w-full"
-                      placeholder="Enter doctor ID"
-                      required
-                    />
-                  </div>
-
+                <form onSubmit={handleConsentSubmit} className="space-y-6">
                   {/* Consent Form */}
                   <div className="bg-gray-50 rounded-xl p-6 border border-gray-200 text-left">
                     <h3 className="text-sm font-semibold text-gray-900 mb-4">Consent Form</h3>
@@ -94,7 +87,7 @@ export default function ShareModal({ patientId, onClose }: ShareModalProps) {
                           required
                         />
                         <span className="text-sm text-gray-700">
-                          I consent to share my complete medical history with the healthcare provider identified above
+                          I consent to share my complete medical history with healthcare providers
                         </span>
                       </label>
                       <label className="flex items-start gap-3 cursor-pointer">
@@ -112,18 +105,18 @@ export default function ShareModal({ patientId, onClose }: ShareModalProps) {
                     </div>
                   </div>
 
-                  {/* Submit Button */}
+                  {/* Sign Button */}
                   <motion.button
                     type="submit"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     className="w-full bg-apple-blue text-white py-3 px-6 rounded-xl font-semibold hover:bg-apple-blueDark transition-colors"
                   >
-                    Sign & Share
+                    Sign & Continue
                   </motion.button>
                 </form>
               </>
-            ) : (
+            ) : !showDoctorIdInput ? (
               <>
                 <motion.div
                   initial={{ scale: 0 }}
@@ -137,15 +130,15 @@ export default function ShareModal({ patientId, onClose }: ShareModalProps) {
                 </motion.div>
 
                 <h2 className="text-2xl font-semibold text-gray-900 mb-2">
-                  Records Shared Successfully
+                  Consent Signed
                 </h2>
                 <p className="text-gray-600 mb-8">
-                  Share this MedKey ID with Dr. {doctorId}
+                  Share your MedKey ID with your doctor
                 </p>
 
                 {/* MedKey ID */}
                 <div className="mb-8">
-                  <p className="text-sm text-gray-600 mb-3">MedKey ID</p>
+                  <p className="text-sm text-gray-600 mb-3">Your MedKey ID</p>
                   <motion.div
                     initial={{ scale: 0.9 }}
                     animate={{ scale: 1 }}
@@ -176,14 +169,83 @@ export default function ShareModal({ patientId, onClose }: ShareModalProps) {
                   </motion.div>
                 </div>
 
+                {/* Enter Doctor ID Option */}
+                <div className="pt-6 border-t border-gray-200">
+                  <button
+                    onClick={() => setShowDoctorIdInput(true)}
+                    className="text-apple-blue hover:text-apple-blueDark text-sm font-semibold flex items-center justify-center gap-2 w-full py-3 hover:bg-blue-50 rounded-xl transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Enter Doctor's MedKey ID
+                  </button>
+                </div>
+
                 <motion.button
                   onClick={onClose}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="w-full bg-apple-blue text-white py-3 px-6 rounded-xl font-semibold hover:bg-apple-blueDark transition-colors"
+                  className="w-full bg-gray-100 text-gray-700 py-3 px-6 rounded-xl font-semibold hover:bg-gray-200 transition-colors mt-4"
                 >
                   Done
                 </motion.button>
+              </>
+            ) : (
+              <>
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: 'spring', duration: 0.6 }}
+                  className="w-16 h-16 bg-apple-blue rounded-full flex items-center justify-center mx-auto mb-6"
+                >
+                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </motion.div>
+
+                <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+                  Enter Doctor's MedKey ID
+                </h2>
+                <p className="text-gray-600 mb-8">
+                  Enter your doctor's MedKey ID to share your records directly
+                </p>
+
+                <form onSubmit={handleDoctorIdSubmit} className="space-y-6">
+                  <div className="text-left">
+                    <label className="block text-sm font-semibold text-gray-700 mb-3">
+                      Doctor's MedKey ID <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={doctorMedKeyId}
+                      onChange={(e) => setDoctorMedKeyId(e.target.value)}
+                      className="apple-input w-full"
+                      placeholder="Enter doctor's MedKey ID (e.g., MK-ABC123XY)"
+                      required
+                    />
+                  </div>
+
+                  <div className="flex gap-4">
+                    <motion.button
+                      type="button"
+                      onClick={() => setShowDoctorIdInput(false)}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="flex-1 bg-gray-100 text-gray-700 py-3 px-6 rounded-xl font-semibold hover:bg-gray-200 transition-colors"
+                    >
+                      Back
+                    </motion.button>
+                    <motion.button
+                      type="submit"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="flex-1 bg-apple-blue text-white py-3 px-6 rounded-xl font-semibold hover:bg-apple-blueDark transition-colors"
+                    >
+                      Share Records
+                    </motion.button>
+                  </div>
+                </form>
               </>
             )}
           </div>
