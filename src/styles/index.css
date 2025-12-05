@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply box-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'kern' 1;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+@layer components {
+  .apple-input {
+    @apply w-full px-5 py-4 bg-white/70 backdrop-blur-sm border border-gray-200/80 rounded-2xl 
+           text-gray-900 placeholder-gray-400 
+           focus:outline-none focus:ring-2 focus:ring-apple-blue/50 focus:border-apple-blue/50
+           focus:bg-white transition-all duration-200
+           shadow-sm hover:shadow-md hover:border-gray-300;
+  }
+  
+  .apple-select {
+    @apply w-full px-5 py-4 bg-white/70 backdrop-blur-sm border border-gray-200/80 rounded-2xl 
+           text-gray-900
+           focus:outline-none focus:ring-2 focus:ring-apple-blue/50 focus:border-apple-blue/50
+           focus:bg-white transition-all duration-200
+           shadow-sm hover:shadow-md hover:border-gray-300
+           appearance-none cursor-pointer;
+  }
+  
+  .apple-card {
+    @apply bg-white/60 backdrop-blur-xl rounded-3xl shadow-apple-xl border border-white/50;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-apple-blue to-blue-600;
+  }
+  
+  .glass {
+    @apply bg-white/80 backdrop-blur-xl;
+  }
+}
+
