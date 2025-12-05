@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { PatientData, MedicalRecord } from '../App'
+import ConsentRequestModal from './ConsentRequestModal'
+import { storage } from '../utils/storage'
 
 interface MedicalHistoryProps {
   patientData: PatientData
@@ -13,6 +15,32 @@ type MenuItem = 'overview' | 'allergies' | 'medications' | 'diagnoses' | 'labs' 
 
 export default function MedicalHistory({ patientData, medicalRecords, patientId, onShare }: MedicalHistoryProps) {
   const [activeMenu, setActiveMenu] = useState<MenuItem>('overview')
+  const [showConsentModal, setShowConsentModal] = useState(false)
+  const [hasPendingRequest, setHasPendingRequest] = useState(false)
+  
+  useEffect(() => {
+    // Check if there's a pending consent request
+    // In real app, this would check from backend/notifications
+    // For demo, we'll check if doctor has requested access
+    const patients = storage.get<Array<any>>('doctor_patients', [])
+    const patient = patients.find(p => p.medKeyId === patientId)
+    const consents = storage.get<Array<any>>('patient_consents', [])
+    const hasConsented = consents.some(c => c.patientId === patientId && c.consented === true)
+    
+    // Show notification if patient exists in doctor's list and hasn't consented yet
+    if (patient && !hasConsented && patient.status === 'pending') {
+      setHasPendingRequest(true)
+    }
+  }, [patientId])
+
+  const handleConsentGranted = () => {
+    setHasPendingRequest(false)
+  }
+
+  const handleConsentDeclined = () => {
+    setHasPendingRequest(false)
+  }
+
   const [messages] = useState([
     { id: 1, from: 'Dr. Sarah Johnson', subject: 'Lab Results Available', date: '2024-01-16', message: 'Your recent lab results are now available. All values are within normal range. Please continue with your current medications.', read: false },
     { id: 2, from: 'Dr. Michael Chen', subject: 'Follow-up Appointment', date: '2024-01-10', message: 'Your cardiology follow-up is scheduled for next month. Please continue monitoring your blood pressure daily.', read: true },
@@ -443,14 +471,28 @@ export default function MedicalHistory({ patientData, medicalRecords, patientId,
               <h1 className="text-xl font-semibold text-gray-900">MedKey Portal</h1>
               <p className="text-sm text-gray-600 mt-0.5">{patientData.firstName} {patientData.lastName} • MedKey ID: {patientId}</p>
             </div>
-            <motion.button
-              onClick={onShare}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="bg-apple-blue text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-apple-blueDark transition-colors shadow-sm"
-            >
-              Share Records
-            </motion.button>
+            <div className="flex items-center gap-3">
+              {/* Notification Bell */}
+              <button
+                onClick={() => setShowConsentModal(true)}
+                className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                {hasPendingRequest && (
+                  <span className="absolute top-1 right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>
+                )}
+              </button>
+              <motion.button
+                onClick={onShare}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="bg-apple-blue text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-apple-blueDark transition-colors shadow-sm"
+              >
+                Share Records
+              </motion.button>
+            </div>
           </div>
         </div>
       </header>
@@ -500,6 +542,14 @@ export default function MedicalHistory({ patientData, medicalRecords, patientId,
           </main>
         </div>
       </div>
+
+      <ConsentRequestModal
+        isOpen={showConsentModal}
+        onClose={() => setShowConsentModal(false)}
+        patientId={patientId}
+        onConsentGranted={handleConsentGranted}
+        onConsentDeclined={handleConsentDeclined}
+      />
     </div>
   )
 }
