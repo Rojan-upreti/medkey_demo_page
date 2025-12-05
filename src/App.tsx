@@ -1,10 +1,15 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import HomePage from './components/HomePage'
 import PersonalInfoForm from './components/PersonalInfoForm'
 import HospitalInfoForm from './components/HospitalInfoForm'
 import LoadingScreen from './components/LoadingScreen'
 import MedicalHistory from './components/MedicalHistory'
 import ShareModal from './components/ShareModal'
+import DoctorDashboard from './components/DoctorDashboard'
+import DoctorPatientView from './components/DoctorPatientView'
+import PatientConsentPage from './components/PatientConsentPage'
+import PatientsManagement from './components/PatientsManagement'
+import { storage } from './utils/storage'
 
 export interface PatientData {
   firstName: string
@@ -27,42 +32,89 @@ export interface MedicalRecord {
   visits: Array<{ date: string; provider: string; reason: string; notes: string }>
 }
 
-type AppState = 'home' | 'personal' | 'hospital' | 'loading' | 'history'
+type AppState = 'home' | 'personal' | 'hospital' | 'loading' | 'history' | 'doctor-dashboard' | 'doctor-patient-view' | 'patient-consent' | 'patients-management'
 
 function App() {
-  const [state, setState] = useState<AppState>('home')
-  const [personalInfo, setPersonalInfo] = useState<{ firstName: string; lastName: string; dob: string } | null>(null)
-  const [patientData, setPatientData] = useState<PatientData | null>(null)
-  const [medicalRecords, setMedicalRecords] = useState<MedicalRecord | null>(null)
-  const [patientId, setPatientId] = useState<string>('')
+  // Load persisted state from localStorage
+  const [state, setState] = useState<AppState>(() => {
+    // If patient data exists, go to history
+    const savedPatientData = storage.get<PatientData | null>('patient_data', null)
+    const savedMedicalRecords = storage.get<MedicalRecord | null>('medical_records', null)
+    if (savedPatientData && savedMedicalRecords) {
+      return 'history'
+    }
+    return 'home'
+  })
+  
+  const [personalInfo, setPersonalInfo] = useState<{ firstName: string; lastName: string; dob: string } | null>(() => 
+    storage.get<{ firstName: string; lastName: string; dob: string } | null>('personal_info', null)
+  )
+  const [patientData, setPatientData] = useState<PatientData | null>(() => 
+    storage.get<PatientData | null>('patient_data', null)
+  )
+  const [medicalRecords, setMedicalRecords] = useState<MedicalRecord | null>(() => 
+    storage.get<MedicalRecord | null>('medical_records', null)
+  )
+  const [patientId, setPatientId] = useState<string>(() => 
+    storage.get<string>('patient_id', '')
+  )
   const [showShareModal, setShowShareModal] = useState(false)
+  
+  // Doctor flow state
+  const [selectedPatientId, setSelectedPatientId] = useState<string>('')
+  const [selectedPatientMedKeyId, setSelectedPatientMedKeyId] = useState<string>('')
+  const [selectedPatientName, setSelectedPatientName] = useState<string>('')
+  const [pendingConsentMedKeyId, setPendingConsentMedKeyId] = useState<string>('')
+  
+  // Save personal info when it changes
+  useEffect(() => {
+    if (personalInfo) {
+      storage.set('personal_info', personalInfo)
+    }
+  }, [personalInfo])
 
   const handleRoleSelection = (role: 'doctor' | 'patient') => {
     if (role === 'patient') {
       setState('personal')
     } else {
-      // Doctor flow - can be implemented later
-      alert('Doctor portal coming soon!')
+      setState('doctor-dashboard')
     }
   }
 
   const handlePersonalInfoSubmit = (data: { firstName: string; lastName: string; dob: string }) => {
     setPersonalInfo(data)
+    storage.set('personal_info', data)
     setState('hospital')
   }
 
   const handleHospitalInfoSubmit = (data: PatientData) => {
     setPatientData(data)
-    // Generate random patient ID
-    const randomId = `MK-${Math.random().toString(36).substring(2, 10).toUpperCase()}`
+    // Generate or retrieve patient ID
+    let randomId = storage.get<string>('patient_id', '')
+    if (!randomId) {
+      randomId = `MK-${Math.random().toString(36).substring(2, 10).toUpperCase()}`
+      storage.set('patient_id', randomId)
+    }
     setPatientId(randomId)
-    setState('loading')
     
-    // Simulate loading, then show medical history
-    setTimeout(() => {
-      setMedicalRecords(generateMockMedicalData())
+    // Save patient data
+    storage.set('patient_data', data)
+    
+    // Check if medical records already exist
+    const existingRecords = storage.get<MedicalRecord | null>('medical_records', null)
+    if (existingRecords) {
+      setMedicalRecords(existingRecords)
       setState('history')
-    }, 3000)
+    } else {
+      setState('loading')
+      // Simulate loading, then show medical history
+      setTimeout(() => {
+        const mockData = generateMockMedicalData()
+        setMedicalRecords(mockData)
+        storage.set('medical_records', mockData)
+        setState('history')
+      }, 3000)
+    }
   }
 
   const generateMockMedicalData = (): MedicalRecord => {
@@ -108,6 +160,61 @@ function App() {
     }
   }
 
+  const handleDoctorPatientSelect = (patientId: string, medKeyId: string) => {
+    // Get patient info from stored patients
+    const patients = storage.get<Array<{id: string, name: string, medKeyId: string, status: string}>>('doctor_patients', [])
+    const patient = patients.find(p => p.medKeyId === medKeyId)
+    const patientName = patient?.name || 'Patient'
+    
+    // Check if consent is already signed
+    const signatures = storage.get<Array<{medKeyId: string}>>('consent_signatures', [])
+    const hasConsent = signatures.some(s => s.medKeyId === medKeyId)
+    
+    // If patient status is pending, show consent page first
+    if (patient?.status === 'pending' && !hasConsent) {
+      setPendingConsentMedKeyId(medKeyId)
+      setSelectedPatientName(patientName)
+      setState('patient-consent')
+    } else {
+      // Show patient view (consent already given or patient is active)
+      setSelectedPatientId(patientId)
+      setSelectedPatientMedKeyId(medKeyId)
+      setSelectedPatientName(patientName)
+      setMedicalRecords(generateMockMedicalData())
+      setState('doctor-patient-view')
+    }
+  }
+
+  const handleConsentGranted = () => {
+    // After consent is granted, update patient status to active
+    const patients = storage.get<Array<{id: string, name: string, medKeyId: string, lastAccess: string, status: 'pending' | 'active', age: number, lastVisit: string, nextAppointment?: string}>>('doctor_patients', [])
+    const updatedPatients = patients.map(p => 
+      p.medKeyId === pendingConsentMedKeyId ? { ...p, status: 'active' as const, lastAccess: new Date().toISOString().split('T')[0] } : p
+    )
+    storage.set('doctor_patients', updatedPatients)
+    
+    // Show doctor patient view
+    setSelectedPatientId('1')
+    setSelectedPatientMedKeyId(pendingConsentMedKeyId)
+    setMedicalRecords(generateMockMedicalData())
+    setState('doctor-patient-view')
+  }
+
+  const handleConsentDeclined = () => {
+    // Go back to dashboard
+    setPendingConsentMedKeyId('')
+    setState('doctor-dashboard')
+  }
+
+  const handleAddPatientRequest = (medKeyId: string) => {
+    // When doctor adds a patient, show consent page if it's Rojan
+    if (medKeyId === 'MK-ROJAN123') {
+      setPendingConsentMedKeyId(medKeyId)
+      setSelectedPatientName('Rojan Upreti')
+      setState('patient-consent')
+    }
+  }
+
   return (
     <div className="min-h-screen bg-white">
       {state === 'home' && <HomePage onRoleSelect={handleRoleSelection} />}
@@ -126,6 +233,38 @@ function App() {
           medicalRecords={medicalRecords!}
           patientId={patientId}
           onShare={() => setShowShareModal(true)}
+        />
+      )}
+      {state === 'doctor-dashboard' && (
+        <DoctorDashboard
+          onPatientSelect={handleDoctorPatientSelect}
+          onBack={() => setState('home')}
+          onAddPatientRequest={handleAddPatientRequest}
+          onNavigateToPatients={() => setState('patients-management')}
+        />
+      )}
+      {state === 'patients-management' && (
+        <PatientsManagement
+          onPatientSelect={handleDoctorPatientSelect}
+          onBack={() => setState('doctor-dashboard')}
+          onAddPatientRequest={handleAddPatientRequest}
+        />
+      )}
+      {state === 'patient-consent' && (
+        <PatientConsentPage
+          patientName={selectedPatientName}
+          doctorName="Dr. Sarah Johnson"
+          medKeyId={pendingConsentMedKeyId}
+          onConsent={handleConsentGranted}
+          onDecline={handleConsentDeclined}
+        />
+      )}
+      {state === 'doctor-patient-view' && medicalRecords && (
+        <DoctorPatientView
+          patientName={selectedPatientName}
+          medKeyId={selectedPatientMedKeyId}
+          medicalRecords={medicalRecords}
+          onBack={() => setState('doctor-dashboard')}
         />
       )}
       {showShareModal && (
