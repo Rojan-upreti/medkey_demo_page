@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { QRCodeSVG } from 'qrcode.react'
 
 interface ShareModalProps {
   patientId: string
@@ -40,7 +39,7 @@ export default function ShareModal({ patientId, onClose }: ShareModalProps) {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.9 }}
-          className="bg-white rounded-3xl shadow-apple-xl max-w-md w-full p-8 relative"
+          className="bg-white rounded-3xl shadow-apple-xl max-w-lg w-full p-8 relative"
         >
           {/* Close Button */}
           <button
@@ -122,64 +121,71 @@ export default function ShareModal({ patientId, onClose }: ShareModalProps) {
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: 'spring', duration: 0.6 }}
-                  className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6"
+                  className="w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg"
                 >
-                  <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
                 </motion.div>
 
-                <h2 className="text-2xl font-semibold text-gray-900 mb-2">
-                  Consent Signed
+                <h2 className="text-3xl font-semibold text-gray-900 mb-3">
+                  Consent Signed Successfully
                 </h2>
-                <p className="text-gray-600 mb-8">
-                  Share your MedKey ID with your doctor
+                <p className="text-gray-600 mb-8 text-lg">
+                  Your medical records are ready to share
                 </p>
 
-                {/* MedKey ID */}
+                {/* MedKey ID Card */}
                 <div className="mb-8">
-                  <p className="text-sm text-gray-600 mb-3">Your MedKey ID</p>
-                  <motion.div
-                    initial={{ scale: 0.9 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.2 }}
-                    className="bg-gray-50 rounded-2xl p-6 border-2 border-apple-blue"
-                  >
-                    <p className="text-4xl font-bold text-apple-blue tracking-widest font-mono">
-                      {patientId}
-                    </p>
-                  </motion.div>
+                  <div className="bg-gradient-to-br from-apple-blue/10 to-blue-50 rounded-2xl p-8 border-2 border-apple-blue/30">
+                    <p className="text-sm font-semibold text-gray-600 mb-4 uppercase tracking-wider">Your MedKey ID</p>
+                    <motion.div
+                      initial={{ scale: 0.9, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ delay: 0.2, type: 'spring' }}
+                      className="bg-white rounded-xl p-6 border-2 border-apple-blue shadow-lg"
+                    >
+                      <p className="text-5xl font-bold text-apple-blue tracking-widest font-mono mb-2">
+                        {patientId}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-2">Share this ID with your healthcare provider</p>
+                    </motion.div>
+                  </div>
                 </div>
 
-                {/* QR Code */}
-                <div className="mb-8">
-                  <p className="text-sm text-gray-600 mb-3">Scan QR Code</p>
-                  <motion.div
-                    initial={{ scale: 0.9 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.3 }}
-                    className="bg-white rounded-2xl p-6 border-2 border-gray-200 inline-block"
-                  >
-                    <QRCodeSVG
-                      value={patientId}
-                      size={200}
-                      level="H"
-                      includeMargin={true}
-                    />
-                  </motion.div>
+                {/* Info Cards */}
+                <div className="grid grid-cols-2 gap-4 mb-8">
+                  <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                      </svg>
+                    </div>
+                    <p className="text-xs font-semibold text-gray-700">Share ID</p>
+                  </div>
+                  <div className="bg-green-50 rounded-xl p-4 border border-green-200">
+                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                      <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                      </svg>
+                    </div>
+                    <p className="text-xs font-semibold text-gray-700">Secure</p>
+                  </div>
                 </div>
 
                 {/* Enter Doctor ID Option */}
                 <div className="pt-6 border-t border-gray-200">
-                  <button
+                  <motion.button
                     onClick={() => setShowDoctorIdInput(true)}
-                    className="text-apple-blue hover:text-apple-blueDark text-sm font-semibold flex items-center justify-center gap-2 w-full py-3 hover:bg-blue-50 rounded-xl transition-colors"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full bg-white border-2 border-apple-blue text-apple-blue hover:bg-apple-blue hover:text-white py-4 px-6 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-3 shadow-sm hover:shadow-md"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                     Enter Doctor's MedKey ID
-                  </button>
+                  </motion.button>
                 </div>
 
                 <motion.button
