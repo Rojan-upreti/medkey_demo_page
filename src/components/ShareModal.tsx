@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { QRCodeSVG } from 'qrcode.react'
 
@@ -8,17 +7,6 @@ interface ShareModalProps {
 }
 
 export default function ShareModal({ patientId, onClose }: ShareModalProps) {
-  const [shareCode, setShareCode] = useState<string>('')
-
-  useEffect(() => {
-    // Generate 5-character alphanumeric code
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-    let code = ''
-    for (let i = 0; i < 5; i++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length))
-    }
-    setShareCode(code)
-  }, [])
 
   return (
     <AnimatePresence>
@@ -58,9 +46,9 @@ export default function ShareModal({ patientId, onClose }: ShareModalProps) {
               Show this code or QR code to your doctor to grant access to your medical records
             </p>
 
-            {/* Share Code */}
+            {/* MedKey ID */}
             <div className="mb-8">
-              <p className="text-sm text-gray-600 mb-3">Share Code</p>
+              <p className="text-sm text-gray-600 mb-3">MedKey ID</p>
               <motion.div
                 initial={{ scale: 0.9 }}
                 animate={{ scale: 1 }}
@@ -68,7 +56,7 @@ export default function ShareModal({ patientId, onClose }: ShareModalProps) {
                 className="bg-gray-50 rounded-2xl p-6 border-2 border-apple-blue"
               >
                 <p className="text-4xl font-bold text-apple-blue tracking-widest font-mono">
-                  {shareCode}
+                  {patientId}
                 </p>
               </motion.div>
             </div>
@@ -83,18 +71,12 @@ export default function ShareModal({ patientId, onClose }: ShareModalProps) {
                 className="bg-white rounded-2xl p-6 border-2 border-gray-200 inline-block"
               >
                 <QRCodeSVG
-                  value={shareCode}
+                  value={patientId}
                   size={200}
                   level="H"
                   includeMargin={true}
                 />
               </motion.div>
-            </div>
-
-            {/* Patient ID */}
-            <div className="bg-gray-50 rounded-xl p-4 mb-6">
-              <p className="text-xs text-gray-600 mb-1">Patient ID</p>
-              <p className="text-sm font-semibold text-gray-900">{patientId}</p>
             </div>
 
             <motion.button
