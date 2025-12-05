@@ -441,7 +441,7 @@ export default function MedicalHistory({ patientData, medicalRecords, patientId,
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-xl font-semibold text-gray-900">MedKey Portal</h1>
-              <p className="text-sm text-gray-600 mt-0.5">{patientData.firstName} {patientData.lastName} • ID: {patientId}</p>
+              <p className="text-sm text-gray-600 mt-0.5">{patientData.firstName} {patientData.lastName} • MedKey ID: {patientId}</p>
             </div>
             <motion.button
               onClick={onShare}
